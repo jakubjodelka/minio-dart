@@ -15,24 +15,20 @@ String signV4(
 ) {
   final signedHeaders = getSignedHeaders(request.headers.keys);
   final hashedPayload = request.headers['x-amz-content-sha256'];
-  final canonicalRequest =
-      getCanonicalRequest(request, signedHeaders, hashedPayload!);
+  final canonicalRequest = getCanonicalRequest(request, signedHeaders, hashedPayload!);
   final stringToSign = getStringToSign(canonicalRequest, requestDate, region);
   final signingKey = getSigningKey(requestDate, region, minio.secretKey);
   final credential = getCredential(minio.accessKey, region, requestDate);
   final signature = hex.encode(
     Hmac(sha256, signingKey).convert(stringToSign.codeUnits).bytes,
   );
+  print('SignV4: ' +
+      '$signV4Algorithm Credential=$credential, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=$signature');
   return '$signV4Algorithm Credential=$credential, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=$signature';
 }
 
 List<String> getSignedHeaders(Iterable<String> headers) {
-  const ignored = {
-    'authorization',
-    'content-length',
-    'content-type',
-    'user-agent'
-  };
+  const ignored = {'authorization', 'content-length', 'content-type', 'user-agent'};
   final result = headers.where((header) => !ignored.contains(header)).toList();
   result.sort();
   return result;
@@ -135,13 +131,15 @@ String presignSignatureV4(
     }),
   );
 
-  final canonicalRequest =
-      getCanonicalRequest(request, signedHeaders, 'UNSIGNED-PAYLOAD');
+  final canonicalRequest = getCanonicalRequest(request, signedHeaders, 'UNSIGNED-PAYLOAD');
 
   final stringToSign = getStringToSign(canonicalRequest, requestDate, region);
   final signingKey = getSigningKey(requestDate, region, minio.secretKey);
   final signature = sha256HmacHex(stringToSign, signingKey);
   final presignedUrl = request.url.toString() + '&X-Amz-Signature=$signature';
+
+  print('RequestQuery: ${requestQuery.entries.map((e) => "${e.key}: ${e.value}")}');
+  print('Presigned URL: $presignedUrl');
 
   return presignedUrl;
 }
@@ -154,5 +152,6 @@ String postPresignSignatureV4(
   String policyBase64,
 ) {
   final signingKey = getSigningKey(date, region, secretKey);
+  print('postPresignSignatureV4: $signingKey');
   return sha256HmacHex(policyBase64, signingKey);
 }

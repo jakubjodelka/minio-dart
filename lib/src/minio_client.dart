@@ -140,8 +140,7 @@ class MinioClient {
 
     region ??= 'us-east-1';
 
-    final request = getBaseRequest(
-        method, bucket, object, region, resource, queries, headers, onProgress);
+    final request = getBaseRequest(method, bucket, object, region, resource, queries, headers, onProgress);
     request.body = payload;
 
     final date = DateTime.now().toUtc();
@@ -156,6 +155,9 @@ class MinioClient {
     request.headers['authorization'] = authorization;
 
     logRequest(request);
+    print('Making request:');
+    print('headers: ${request.headers.entries.map((e) => "${e.key}:${e.value}\n")}');
+    print('url: ${request.url}');
     final response = await request.send();
     return response;
   }
